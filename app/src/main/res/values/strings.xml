@@ -3,7 +3,7 @@
 
     <string name="activity_title">Activity Name</string>
     <string name="energy_title">Energy Level</string>
-    <string name="procrastination_title">Procrastination Time</string>
+    <string name="procrastination_title">Wasted Time</string>
     <string name="activity_hint">What are you doing right now?</string>
     
     <string-array name="energy_level_array">

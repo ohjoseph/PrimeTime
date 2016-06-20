@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.preference.PreferenceManager;
 
 import com.practice.android.primetime.database.TimeBaseHelper;
 import com.practice.android.primetime.database.TimeCursorWrapper;
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 public class TimeLab {
     private static TimeLab sTimeLab;
+    private static final String PREF_NEW_DAY = "newDay";
 
     private Context mContext;
     private SQLiteDatabase mDatabase;
@@ -28,7 +30,7 @@ public class TimeLab {
      *******/
     private TimeLab(Context context) {
         // Create Database
-        mContext = context;
+        mContext = context.getApplicationContext();
         mDatabase = new TimeBaseHelper(mContext).getWritableDatabase();
         makeHours();
     }
@@ -120,14 +122,25 @@ public class TimeLab {
     }
 
     private void makeHours() {
-        UUID dayId = TimeSlot.TODAY_ID;
-        for (int i = 7; i <= 23; i++) {
-            TimeSlot ts = new TimeSlot(dayId, i, "Activity " + (i-6));
-            addTimeSlot(ts);
-        }
-        for (int i = 0; i < 7; i++) {
-            TimeSlot ts = new TimeSlot(dayId, i, "Activity " + (i+18));
-            addTimeSlot(ts);
+        // Check if time slots already made for that day
+        boolean newDay = PreferenceManager.getDefaultSharedPreferences(mContext)
+                .getBoolean(PREF_NEW_DAY, true);
+        if (newDay) {
+            // Create time slots
+            UUID dayId = TimeSlot.TODAY_ID;
+            for (int i = 7; i <= 23; i++) {
+                TimeSlot ts = new TimeSlot(dayId, i, "Activity " + (i - 6));
+                addTimeSlot(ts);
+            }
+            for (int i = 0; i < 7; i++) {
+                TimeSlot ts = new TimeSlot(dayId, i, "Activity " + (i + 18));
+                addTimeSlot(ts);
+            }
+            // Set newDay false
+            PreferenceManager.getDefaultSharedPreferences(mContext)
+                    .edit()
+                    .putBoolean(PREF_NEW_DAY, false)
+                    .apply();
         }
     }
 

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.practice.android.primetime.database.TimeDbSchema.DayTable;
 import com.practice.android.primetime.database.TimeDbSchema.TimeTable;
 
 /**
@@ -20,6 +21,7 @@ public class TimeBaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
+        // Create the database for timeslots
         sqLiteDatabase.execSQL("create table " + TimeTable.NAME + "(" +
                 " _id integer primary key autoincrement, " +
                 TimeTable.Cols.DAY_ID + ", " +
@@ -27,6 +29,12 @@ public class TimeBaseHelper extends SQLiteOpenHelper {
                 TimeTable.Cols.ACTIVITY + ", " +
                 TimeTable.Cols.ENERGY + ", " +
                 TimeTable.Cols.PROCRASTINATION + ")"
+        );
+
+        // Create the database for days
+        sqLiteDatabase.execSQL("create table " + DayTable.NAME + "(" +
+            " _id integer primary key autoincrement, " +
+                DayTable.Cols.DAY_ID + ")"
         );
     }
 

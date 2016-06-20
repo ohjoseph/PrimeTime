@@ -16,4 +16,12 @@ public class TimeDbSchema {
             public static final String PROCRASTINATION = "procrastination";
         }
     }
+
+    public static final class DayTable {
+        public static final String NAME = "Days";
+
+        public static final class Cols {
+            public static final String DAY_ID = "id";
+        }
+    }
 }

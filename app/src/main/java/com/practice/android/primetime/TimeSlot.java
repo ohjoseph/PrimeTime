@@ -14,17 +14,17 @@ import java.util.UUID;
  */
 
 public class TimeSlot {
-    public static UUID TODAY_ID = UUID.randomUUID();
+    public static UUID TODAY_ID = UUID.fromString("fea7829a-3731-11e6-ac61-9e71128cae77");
 
     private UUID mDayId;
     private int mTime;
     private String mActivity;
-    private int mEnergy;
+    private int mEnergy = 1;
     private int mProcrastinationTime;
 
     public TimeSlot() {
         mDayId = TODAY_ID;
-        mActivity = "Sample Activity";
+        mActivity = "Sleep";
     }
 
     public TimeSlot(UUID dayId, int time) {
@@ -36,14 +36,6 @@ public class TimeSlot {
         mDayId = dayId;
         mTime = time;
         mActivity = activity;
-    }
-
-    public int getTime() {
-        return mTime;
-    }
-
-    public void setTime(int time) {
-        mTime = time;
     }
 
     public String getTimeString() {
@@ -73,6 +65,9 @@ public class TimeSlot {
 
     public UUID getDayId() {
         return mDayId;
+    }
+    public int getTime() {
+        return mTime;
     }
 
     public String getActivity() {

@@ -1,6 +1,8 @@
 package com.practice.android.primetime;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -21,6 +23,7 @@ public class TimeListFragment extends Fragment {
 
     private RecyclerView mRecyclerView;
     private TimeAdapter mAdapter;
+    private TimeSlot mLastTimeSlotClicked;
 
     public static TimeListFragment newInstance(String param1, String param2) {
         TimeListFragment fragment = new TimeListFragment();
@@ -50,6 +53,26 @@ public class TimeListFragment extends Fragment {
     }
 
     @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Check for TimeSlotDialog
+        if (requestCode == REQUEST_TIME_SLOT && resultCode == Activity.RESULT_OK) {
+            if (data == null || mLastTimeSlotClicked == null) {
+                return;
+            }
+            // Update the clicked TimeSlot
+            String activity = data.getStringExtra(TimeSlotDialog.EXTRA_ACTIVITY);
+            int energy = data.getIntExtra(TimeSlotDialog.EXTRA_ENERGY, 1);
+            int procrast = data.getIntExtra(TimeSlotDialog.EXTRA_PROCRASTINATION, 0);
+            mLastTimeSlotClicked.setActivity(activity);
+            mLastTimeSlotClicked.setEnergy(energy);
+            mLastTimeSlotClicked.setProcrastinationTime(procrast);
+            // Save changes
+            TimeLab.get(getActivity()).updateTimeSlot(mLastTimeSlotClicked);
+            updateUI();
+        }
+    }
+
+    @Override
     public void onPause() {
         super.onPause();
     }
@@ -57,7 +80,6 @@ public class TimeListFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        updateUI();
     }
 
     /*******
@@ -96,6 +118,8 @@ public class TimeListFragment extends Fragment {
 
         @Override
         public void onClick(View view) {
+            // Save out last clicked
+            mLastTimeSlotClicked = mTimeSlot;
             // Open the TimeSlot dialog
             FragmentManager fm = getFragmentManager();
             TimeSlotDialog dialogFrag = TimeSlotDialog.newInstance(mTimeSlot);
@@ -135,7 +159,7 @@ public class TimeListFragment extends Fragment {
     }
 
     /********
-     * Helper Classes
+     * Helper Methods
      *********/
     private void updateUI() {
         List<TimeSlot> slots = TimeLab.get(getActivity()).getTimeSlots(TimeSlot.TODAY_ID);
