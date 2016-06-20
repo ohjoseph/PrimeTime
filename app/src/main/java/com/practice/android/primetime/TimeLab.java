@@ -46,7 +46,9 @@ public class TimeLab {
      ******/
     public void addTimeSlot(TimeSlot slot) {
         ContentValues values = slot.toContentValues();
-        mDatabase.insert(TimeTable.NAME, null, values);
+
+        // Add to database
+        mDatabase.insertOrThrow(TimeTable.NAME, null, values);
     }
 
     public void updateTimeSlot(TimeSlot slot) {
@@ -54,6 +56,7 @@ public class TimeLab {
         String timeString = slot.getTime() + "";
         ContentValues values = slot.toContentValues();
 
+        // Update the database
         mDatabase.update(TimeTable.NAME,
                 values,
                 TimeTable.Cols.DAY_ID + " = ? AND " + TimeTable.Cols.TIME + " = ?",
@@ -82,10 +85,12 @@ public class TimeLab {
     public List<TimeSlot> getTimeSlots(UUID dayId) {
         List<TimeSlot> slots = new ArrayList<>();
 
+        // Format the query
         String whereClause = TimeTable.Cols.DAY_ID + " = ?";
         String[] whereArgs = new String[] {dayId.toString()};
         TimeCursorWrapper cursor = queryTimeSlots(whereClause, whereArgs);
 
+        // Return a list of all TimeSlots for that day
         try {
             cursor.moveToFirst();
             while (!cursor.isAfterLast()) {
@@ -117,11 +122,11 @@ public class TimeLab {
     private void makeHours() {
         UUID dayId = TimeSlot.TODAY_ID;
         for (int i = 7; i <= 23; i++) {
-            TimeSlot ts = new TimeSlot(dayId, i, "Activity " + i);
+            TimeSlot ts = new TimeSlot(dayId, i, "Activity " + (i-6));
             addTimeSlot(ts);
         }
         for (int i = 0; i < 7; i++) {
-            TimeSlot ts = new TimeSlot(dayId, i, "Activity " + i);
+            TimeSlot ts = new TimeSlot(dayId, i, "Activity " + (i+18));
             addTimeSlot(ts);
         }
     }

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -15,6 +16,8 @@ import android.widget.Toast;
 import java.util.List;
 
 public class TimeListFragment extends Fragment {
+    public static final int REQUEST_TIME_SLOT = 0;
+    private static final String DIALOG_TIME_SLOT = "dialog_time_slot";
 
     private RecyclerView mRecyclerView;
     private TimeAdapter mAdapter;
@@ -46,12 +49,24 @@ public class TimeListFragment extends Fragment {
         return v;
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateUI();
+    }
+
     /*******
      * RecyclerView Classes
      ********/
     private class TimeHolder extends RecyclerView.ViewHolder
             implements View.OnClickListener {
 
+        private TimeSlot mTimeSlot;
         private TextView mTimeTextView;
         private TextView mActivityTextView;
         private TextView mEnergyTextView;
@@ -72,6 +87,7 @@ public class TimeListFragment extends Fragment {
         }
 
         public void bindTimeHolder(TimeSlot timeSlot) {
+            mTimeSlot = timeSlot;
             mTimeTextView.setText(timeSlot.getTimeString());
             mActivityTextView.setText(timeSlot.getActivity());
             mEnergyTextView.setText("" + timeSlot.getEnergy());
@@ -80,8 +96,11 @@ public class TimeListFragment extends Fragment {
 
         @Override
         public void onClick(View view) {
-            // Do nothing yet
-            Toast.makeText(getActivity(), "Hello", Toast.LENGTH_SHORT).show();
+            // Open the TimeSlot dialog
+            FragmentManager fm = getFragmentManager();
+            TimeSlotDialog dialogFrag = TimeSlotDialog.newInstance(mTimeSlot);
+            dialogFrag.setTargetFragment(TimeListFragment.this, REQUEST_TIME_SLOT);
+            dialogFrag.show(fm, DIALOG_TIME_SLOT);
         }
     }
 
