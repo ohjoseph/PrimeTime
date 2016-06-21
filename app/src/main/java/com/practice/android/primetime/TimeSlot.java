@@ -1,9 +1,7 @@
 package com.practice.android.primetime;
 
 import android.content.ContentValues;
-import android.text.format.DateFormat;
 
-import com.practice.android.primetime.database.TimeDbSchema;
 import com.practice.android.primetime.database.TimeDbSchema.TimeTable;
 
 import java.util.Date;
@@ -14,28 +12,18 @@ import java.util.UUID;
  */
 
 public class TimeSlot {
-    public static UUID TODAY_ID = UUID.fromString("fea7829a-3731-11e6-ac61-9e71128cae77");
-
     private UUID mDayId;
     private int mTime;
     private String mActivity;
-    private int mEnergy = 1;
+    private int mEnergy;
     private int mProcrastinationTime;
-
-    public TimeSlot() {
-        mDayId = TODAY_ID;
-        mActivity = "Sleep";
-    }
-
-    public TimeSlot(UUID dayId, int time) {
-        mDayId = dayId;
-        mTime = time;
-    }
 
     public TimeSlot(UUID dayId, int time, String activity) {
         mDayId = dayId;
         mTime = time;
         mActivity = activity;
+        mEnergy = 1;
+        mProcrastinationTime = 0;
     }
 
     public String getTimeString() {

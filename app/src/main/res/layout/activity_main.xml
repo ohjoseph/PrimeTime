@@ -1,9 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/fragment_container"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.practice.android.primetime.MainActivity"/>
+    tools:context="com.practice.android.primetime.MainActivity">
+
+    <android.support.design.widget.TabLayout
+        android:id="@+id/activity_tab_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="@style/CustomTabLayout"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="@color/light_gray"/>
+
+    <com.practice.android.primetime.NoSwipeViewPager
+        android:id="@+id/no_swipe_viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</LinearLayout>

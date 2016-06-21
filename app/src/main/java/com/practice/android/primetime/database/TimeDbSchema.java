@@ -21,6 +21,7 @@ public class TimeDbSchema {
         public static final String NAME = "Days";
 
         public static final class Cols {
+            public static final String DATE_STRING = "date";
             public static final String DAY_ID = "id";
         }
     }

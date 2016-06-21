@@ -5,16 +5,22 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.sql.Time;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class TimeListFragment extends Fragment {
@@ -22,6 +28,7 @@ public class TimeListFragment extends Fragment {
     private static final String DIALOG_TIME_SLOT = "dialog_time_slot";
 
     private RecyclerView mRecyclerView;
+    private TextView mEmptyView;
     private TimeAdapter mAdapter;
     private TimeSlot mLastTimeSlotClicked;
 
@@ -33,20 +40,17 @@ public class TimeListFragment extends Fragment {
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_time_list, container, false);
+        mEmptyView = (TextView) v.findViewById(R.id.empty_view);
 
         // Initialize RecyclerView
         mRecyclerView = (RecyclerView) v.findViewById(R.id.time_list_recyclerView);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mRecyclerView.setNestedScrollingEnabled(false);
+
         updateUI();
 
         return v;
@@ -70,16 +74,6 @@ public class TimeListFragment extends Fragment {
             TimeLab.get(getActivity()).updateTimeSlot(mLastTimeSlotClicked);
             updateUI();
         }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
     }
 
     /*******
@@ -155,6 +149,7 @@ public class TimeListFragment extends Fragment {
 
         public void setTimeSlots(List<TimeSlot> slots) {
             mTimeSlots = slots;
+            notifyDataSetChanged();
         }
     }
 
@@ -162,15 +157,29 @@ public class TimeListFragment extends Fragment {
      * Helper Methods
      *********/
     private void updateUI() {
-        List<TimeSlot> slots = TimeLab.get(getActivity()).getTimeSlots(TimeSlot.TODAY_ID);
+        // Get data from database
+        TimeLab timeLab = TimeLab.get(getActivity());
+        String lastDateString = timeLab.getLastDay();
+        List<TimeSlot> slots = timeLab.getTimeSlots(lastDateString);
 
-        if (mAdapter == null) {
-            mAdapter = new TimeAdapter(slots);
-            mRecyclerView.setAdapter(mAdapter);
+        // Show or hide the empty view
+        if (slots.isEmpty()) {
+            mEmptyView.setVisibility(View.VISIBLE);
+            mRecyclerView.setVisibility(View.INVISIBLE);
         } else {
-            mAdapter.setTimeSlots(slots);
-            mAdapter.notifyDataSetChanged();
+            mEmptyView.setVisibility(View.INVISIBLE);
+            mRecyclerView.setVisibility(View.VISIBLE);
         }
 
+        // Keep or update existing adapter
+        if (mAdapter == null) {
+            mAdapter = new TimeAdapter(slots);
+        } else {
+            mAdapter.setTimeSlots(slots);
+        }
+
+        // Reset the adapter
+        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.setFocusable(false);
     }
 }

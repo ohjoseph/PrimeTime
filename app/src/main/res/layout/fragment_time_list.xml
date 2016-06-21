@@ -1,24 +1,40 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="@color/translucent_gray"
+    android:id="@+id/scrollView"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/translucent_gray">
 
-    <android.support.v7.widget.CardView
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_margin="16dp"
-        app:cardUseCompatPadding="true">
+        android:layout_height="match_parent">
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/time_list_recyclerView"
+        <android.support.v7.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            tools:context="com.practice.android.primetime.TimeListFragment"/>
+            android:layout_margin="4dp"
+            android:background="@android:color/holo_orange_light"
+            style="@style/MyCardViewStyle">
 
-    </android.support.v7.widget.CardView>
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/time_list_recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context="com.practice.android.primetime.TimeListFragment"/>
+
+            <TextView
+                android:id="@+id/empty_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="16dp"
+                android:background="@android:color/holo_blue_bright"
+                android:text="No TimeSlots found."/>
+
+        </android.support.v7.widget.CardView>
+
+    </FrameLayout>
+
 
 </ScrollView>
 

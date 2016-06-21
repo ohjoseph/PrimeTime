@@ -34,7 +34,8 @@ public class TimeBaseHelper extends SQLiteOpenHelper {
         // Create the database for days
         sqLiteDatabase.execSQL("create table " + DayTable.NAME + "(" +
             " _id integer primary key autoincrement, " +
-                DayTable.Cols.DAY_ID + ")"
+                DayTable.Cols.DAY_ID + ", " +
+                DayTable.Cols.DATE_STRING + ")"
         );
     }
 

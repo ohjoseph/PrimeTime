@@ -5,12 +5,15 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.preference.PreferenceManager;
+import android.text.format.DateFormat;
 
 import com.practice.android.primetime.database.TimeBaseHelper;
 import com.practice.android.primetime.database.TimeCursorWrapper;
+import com.practice.android.primetime.database.TimeDbSchema.DayTable;
 import com.practice.android.primetime.database.TimeDbSchema.TimeTable;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,7 +23,8 @@ import java.util.UUID;
 
 public class TimeLab {
     private static TimeLab sTimeLab;
-    private static final String PREF_NEW_DAY = "newDay";
+    public static final String PREF_NEW_DAY = "newDay";
+    public static final String PREF_LAST_DAY = "last Day";
 
     private Context mContext;
     private SQLiteDatabase mDatabase;
@@ -32,7 +36,7 @@ public class TimeLab {
         // Create Database
         mContext = context.getApplicationContext();
         mDatabase = new TimeBaseHelper(mContext).getWritableDatabase();
-        makeHours();
+        makeNewDay();
     }
 
     public static TimeLab get(Context context) {
@@ -44,7 +48,7 @@ public class TimeLab {
     }
 
     /*****
-     * Database methods
+     * TimeSlot Database methods
      ******/
     public void addTimeSlot(TimeSlot slot) {
         ContentValues values = slot.toContentValues();
@@ -84,7 +88,8 @@ public class TimeLab {
         }
     }
 
-    public List<TimeSlot> getTimeSlots(UUID dayId) {
+    public List<TimeSlot> getTimeSlots(String dateString) {
+        UUID dayId = getDayId(dateString);
         List<TimeSlot> slots = new ArrayList<>();
 
         // Format the query
@@ -107,8 +112,77 @@ public class TimeLab {
     }
 
     /*******
+     * Day Database Methods
+     *******/
+    public void addDay(Day day) {
+        ContentValues values = new ContentValues();
+        values.put(DayTable.Cols.DAY_ID, day.getDayId().toString());
+        values.put(DayTable.Cols.DATE_STRING, day.getDateString());
+
+        mDatabase.insertOrThrow(DayTable.NAME, null, values);
+    }
+
+    public UUID getDayId(String dateString) {
+        // Get the UUID of corresponding date
+        TimeCursorWrapper cursor = queryDay(dateString);
+        try {
+            cursor.moveToFirst();
+            return cursor.getDayUUID();
+        } finally {
+            cursor.close();
+        }
+    }
+
+    public List<Day> getDays() {
+        // Get the list of all Days
+        List<Day> dayList = new ArrayList<>();
+        TimeCursorWrapper cursor = queryDays();
+        try {
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                Day day = cursor.getDay();
+                dayList.add(day);
+                cursor.moveToNext();
+            }
+        } finally {
+          cursor.close();
+        }
+
+        return dayList;
+    }
+
+    /*******
      * Helper Methods
      *******/
+    public void makeNewDay() {
+        // Check if time slots already made for that day
+        String lastDay = PreferenceManager.getDefaultSharedPreferences(mContext)
+                .getString(PREF_LAST_DAY, "");
+        String today = formatDate(new Date());
+
+        if (!today.equals(lastDay)) {
+            // Create a new Day
+            UUID uuid = UUID.randomUUID();
+            Day day = new Day(uuid, today);
+            addDay(day);
+            // Set last day
+            PreferenceManager.getDefaultSharedPreferences(mContext)
+                    .edit().putString(PREF_LAST_DAY, today)
+                    .apply();
+
+            // Create time slots
+            UUID dayId = day.getDayId();
+            for (int i = 7; i <= 23; i++) {
+                TimeSlot ts = new TimeSlot(dayId, i, "Activity " + (i - 6));
+                addTimeSlot(ts);
+            }
+            for (int i = 0; i < 7; i++) {
+                TimeSlot ts = new TimeSlot(dayId, i, "Activity " + (i + 18));
+                addTimeSlot(ts);
+            }
+        }
+    }
+
     private TimeCursorWrapper queryTimeSlots(String whereClause, String[] whereArgs) {
         Cursor cursor = mDatabase.query(
                 TimeTable.NAME,
@@ -121,27 +195,37 @@ public class TimeLab {
         return new TimeCursorWrapper(cursor);
     }
 
-    private void makeHours() {
-        // Check if time slots already made for that day
-        boolean newDay = PreferenceManager.getDefaultSharedPreferences(mContext)
-                .getBoolean(PREF_NEW_DAY, true);
-        if (newDay) {
-            // Create time slots
-            UUID dayId = TimeSlot.TODAY_ID;
-            for (int i = 7; i <= 23; i++) {
-                TimeSlot ts = new TimeSlot(dayId, i, "Activity " + (i - 6));
-                addTimeSlot(ts);
-            }
-            for (int i = 0; i < 7; i++) {
-                TimeSlot ts = new TimeSlot(dayId, i, "Activity " + (i + 18));
-                addTimeSlot(ts);
-            }
-            // Set newDay false
-            PreferenceManager.getDefaultSharedPreferences(mContext)
-                    .edit()
-                    .putBoolean(PREF_NEW_DAY, false)
-                    .apply();
-        }
+    private TimeCursorWrapper queryDays() {
+        Cursor cursor = mDatabase.query(
+                DayTable.NAME,
+                null,
+                null,
+                null,
+                null, null, null
+        );
+
+        return new TimeCursorWrapper(cursor);
+    }
+
+    private TimeCursorWrapper queryDay(String dateString) {
+        Cursor cursor = mDatabase.query(
+                DayTable.NAME,
+                new String[] {DayTable.Cols.DAY_ID},
+                DayTable.Cols.DATE_STRING + " = ?",
+                new String[] {dateString},
+                null, null, null
+        );
+
+        return new TimeCursorWrapper(cursor);
+    }
+
+    public String formatDate(Date date) {
+         return DateFormat.getLongDateFormat(mContext).format(date);
+    }
+
+    public String getLastDay() {
+        return PreferenceManager.getDefaultSharedPreferences(mContext)
+                .getString(TimeLab.PREF_LAST_DAY, formatDate(new Date()));
     }
 
 }
