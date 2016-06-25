@@ -1,41 +1,70 @@
 package com.practice.android.primetime;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Created by Joseph on 6/21/16.
  */
 
-public class DayListFragment extends Fragment {
-
+public class DayListFragment extends Fragment implements UpdateFragmentUI {
+    // Inflated Views
     private RecyclerView mRecyclerView;
+    private TextView mEmptyView;
     private DayAdapter mDayAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle outState) {
         View v = inflater.inflate(R.layout.fragment_day_list, parent, false);
+        mEmptyView = (TextView) v.findViewById(R.id.day_list_empty_view);
 
+        // Initialize RecyclerView
         mRecyclerView = (RecyclerView) v.findViewById(R.id.day_list_recyclerView);
         mRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 2));
-        updateUI();
 
+        updateUI();
         return v;
     }
 
     /*******
      * RecyclerView Classes
      *******/
-    private class DayHolder extends RecyclerView.ViewHolder {
+    private class DayHolder extends RecyclerView.ViewHolder
+            implements View.OnClickListener {
+
+        private TextView mDateTextView;
+        private Day mDay;
+
         public DayHolder(View itemView) {
             super(itemView);
+
+            // Initialize list item
+            mDateTextView = (TextView) itemView.findViewById(R.id.day_list_item_date_textView);
+            mDateTextView.setOnClickListener(this);
+        }
+
+        public void bindHolder(Day day) {
+            mDateTextView.setText(day.getDateString());
+            mDay = day;
+        }
+
+        @Override
+        public void onClick(View view) {
+            // Make a new DayActivity
+            Intent i = new Intent(getActivity(), DayActivity.class);
+            i.putExtra(DayActivity.EXTRA_DAY_ID, mDay.getDateString());
+            startActivity(i);
         }
     }
 
@@ -55,7 +84,7 @@ public class DayListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(DayHolder holder, int position) {
-
+            holder.bindHolder(mDays.get(position));
         }
 
         @Override
@@ -72,8 +101,20 @@ public class DayListFragment extends Fragment {
     /**********
      * Helper Methods
      **********/
-    private void updateUI() {
+    @Override
+    public void updateUI() {
+        // Get list of days
         List<Day> dayList = TimeLab.get(getActivity()).getDays();
+        Collections.reverse(dayList);
+
+        // Show or hide the empty view
+        if (dayList.isEmpty()) {
+            mRecyclerView.setVisibility(View.INVISIBLE);
+            mEmptyView.setVisibility(View.VISIBLE);
+        } else {
+            mRecyclerView.setVisibility(View.VISIBLE);
+            mEmptyView.setVisibility(View.INVISIBLE);
+        }
 
         // Update information from database
         if (mDayAdapter == null) {
@@ -82,6 +123,8 @@ public class DayListFragment extends Fragment {
             mDayAdapter.setDays(dayList);
         }
         mRecyclerView.setAdapter(mDayAdapter);
+
+        // Scroll ScrollView up to top
         mRecyclerView.setFocusable(false);
     }
 }

@@ -34,6 +34,7 @@ public class NoSwipeViewPager extends ViewPager implements ViewPager.PageTransfo
 
     @Override
     public void transformPage(View view, float position) {
+        // Fade in / Fade out transition
         if(position <= -1.0F || position >= 1.0F) {
             view.setTranslationX(view.getWidth() * position);
             view.setAlpha(0.0F);

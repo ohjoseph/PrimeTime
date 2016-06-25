@@ -4,8 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.preference.PreferenceManager;
-import android.text.format.DateFormat;
+import android.util.Log;
 
 import com.practice.android.primetime.database.TimeBaseHelper;
 import com.practice.android.primetime.database.TimeCursorWrapper;
@@ -22,9 +21,8 @@ import java.util.UUID;
  */
 
 public class TimeLab {
+    private static final String TAG = "TimeLab";
     private static TimeLab sTimeLab;
-    public static final String PREF_NEW_DAY = "newDay";
-    public static final String PREF_LAST_DAY = "last Day";
 
     private Context mContext;
     private SQLiteDatabase mDatabase;
@@ -36,7 +34,7 @@ public class TimeLab {
         // Create Database
         mContext = context.getApplicationContext();
         mDatabase = new TimeBaseHelper(mContext).getWritableDatabase();
-        makeNewDay();
+        initializeNewDay();
     }
 
     public static TimeLab get(Context context) {
@@ -45,6 +43,10 @@ public class TimeLab {
         }
 
         return sTimeLab;
+    }
+
+    public static void nullifyInstance() {
+        sTimeLab = null;
     }
 
     /*****
@@ -72,7 +74,7 @@ public class TimeLab {
     public TimeSlot getTimeSlot(UUID dayId, int time) {
         // Get the timeslot for day and time
         String whereClause = TimeTable.Cols.DAY_ID + " = ? AND " + TimeTable.Cols.TIME + " = ?";
-        String[] whereArgs = new String[] {dayId.toString(), Integer.toString(time)};
+        String[] whereArgs = new String[]{dayId.toString(), Integer.toString(time)};
         TimeCursorWrapper cursor = queryTimeSlots(whereClause, whereArgs);
 
         // Get the timeSlot from the cursor
@@ -92,23 +94,41 @@ public class TimeLab {
         UUID dayId = getDayId(dateString);
         List<TimeSlot> slots = new ArrayList<>();
 
-        // Format the query
-        String whereClause = TimeTable.Cols.DAY_ID + " = ?";
-        String[] whereArgs = new String[] {dayId.toString()};
-        TimeCursorWrapper cursor = queryTimeSlots(whereClause, whereArgs);
+        // Check if day exists
+        if (dayId != null) {
+            // Format the query
+            String whereClause = TimeTable.Cols.DAY_ID + " = ?";
+            String[] whereArgs = new String[]{dayId.toString()};
+            TimeCursorWrapper cursor = queryTimeSlots(whereClause, whereArgs);
 
-        // Return a list of all TimeSlots for that day
-        try {
-            cursor.moveToFirst();
-            while (!cursor.isAfterLast()) {
-                slots.add(cursor.getTimeSlot());
-                cursor.moveToNext();
+            // Return a list of all TimeSlots for that day
+            try {
+                cursor.moveToFirst();
+                while (!cursor.isAfterLast()) {
+                    slots.add(cursor.getTimeSlot());
+                    cursor.moveToNext();
+                }
+            } finally {
+                cursor.close();
             }
-        } finally {
-            cursor.close();
+        } else {
+            // Make the TimeSlots for that day
+            Log.e(TAG, "Error: DayID was null.");
         }
 
         return slots;
+    }
+
+    private TimeCursorWrapper queryTimeSlots(String whereClause, String[] whereArgs) {
+        Cursor cursor = mDatabase.query(
+                TimeTable.NAME,
+                null,
+                whereClause,
+                whereArgs,
+                null, null, null
+        );
+
+        return new TimeCursorWrapper(cursor);
     }
 
     /*******
@@ -127,10 +147,14 @@ public class TimeLab {
         TimeCursorWrapper cursor = queryDay(dateString);
         try {
             cursor.moveToFirst();
-            return cursor.getDayUUID();
+            if (!cursor.isAfterLast()) {
+                return cursor.getDayUUID();
+            }
         } finally {
             cursor.close();
         }
+        // Return null if no day found
+        return null;
     }
 
     public List<Day> getDays() {
@@ -145,54 +169,35 @@ public class TimeLab {
                 cursor.moveToNext();
             }
         } finally {
-          cursor.close();
+            cursor.close();
         }
 
         return dayList;
     }
 
-    /*******
-     * Helper Methods
-     *******/
-    public void makeNewDay() {
-        // Check if time slots already made for that day
-        String lastDay = PreferenceManager.getDefaultSharedPreferences(mContext)
-                .getString(PREF_LAST_DAY, "");
-        String today = formatDate(new Date());
-
-        if (!today.equals(lastDay)) {
-            // Create a new Day
-            UUID uuid = UUID.randomUUID();
-            Day day = new Day(uuid, today);
-            addDay(day);
-            // Set last day
-            PreferenceManager.getDefaultSharedPreferences(mContext)
-                    .edit().putString(PREF_LAST_DAY, today)
-                    .apply();
-
-            // Create time slots
-            UUID dayId = day.getDayId();
-            for (int i = 7; i <= 23; i++) {
-                TimeSlot ts = new TimeSlot(dayId, i, "Activity " + (i - 6));
-                addTimeSlot(ts);
+    public void deleteDay(String dateString) {
+        // Delete the TimeSlots of that day
+        String dayId = "";
+        TimeCursorWrapper cursor = queryDay(dateString);
+        try {
+            // Check cursor for null value
+            cursor.moveToFirst();
+            if (cursor.isAfterLast()) {
+                Log.e(TAG, "Error: Could not find DayID for deletion.");
+                return;
             }
-            for (int i = 0; i < 7; i++) {
-                TimeSlot ts = new TimeSlot(dayId, i, "Activity " + (i + 18));
-                addTimeSlot(ts);
-            }
+            dayId = cursor.getDayUUID().toString();
+        } finally {
+            cursor.close();
         }
-    }
+        mDatabase.delete(TimeTable.NAME,
+                TimeTable.Cols.DAY_ID + " = ?",
+                new String[]{dayId});
 
-    private TimeCursorWrapper queryTimeSlots(String whereClause, String[] whereArgs) {
-        Cursor cursor = mDatabase.query(
-                TimeTable.NAME,
-                null,
-                whereClause,
-                whereArgs,
-                null, null, null
-        );
-
-        return new TimeCursorWrapper(cursor);
+        // Delete the Day
+        mDatabase.delete(DayTable.NAME,
+                DayTable.Cols.DATE_STRING + " = ?",
+                new String[]{dateString});
     }
 
     private TimeCursorWrapper queryDays() {
@@ -210,7 +215,7 @@ public class TimeLab {
     private TimeCursorWrapper queryDay(String dateString) {
         Cursor cursor = mDatabase.query(
                 DayTable.NAME,
-                new String[] {DayTable.Cols.DAY_ID},
+                new String[]{DayTable.Cols.DAY_ID},
                 DayTable.Cols.DATE_STRING + " = ?",
                 new String[] {dateString},
                 null, null, null
@@ -219,13 +224,47 @@ public class TimeLab {
         return new TimeCursorWrapper(cursor);
     }
 
-    public String formatDate(Date date) {
-         return DateFormat.getLongDateFormat(mContext).format(date);
+    /*******
+     * Helper Methods
+     *******/
+    private void initializeNewDay() {
+        // Check if time slots already made for that day
+        String lastDay = SharedPreferences.getMostRecentDay(mContext);
+        String today = SharedPreferences.formatDate(mContext, new Date());
+
+        // Make a new day only if not already existing
+        if (!today.equals(lastDay)) {
+            createToday();
+        }
     }
 
-    public String getLastDay() {
-        return PreferenceManager.getDefaultSharedPreferences(mContext)
-                .getString(TimeLab.PREF_LAST_DAY, formatDate(new Date()));
+    public void createToday() {
+        // Make today's TimeSlots
+        String today = SharedPreferences.formatDate(mContext, new Date());
+        createNewDay(today);
+
+        // Update to current day
+        SharedPreferences.setMostRecentDay(mContext, today);
     }
 
+    private void createNewDay(String dateString) {
+        // Delete old time slots, if existing
+        deleteDay(dateString);
+
+        // Create a new Day
+        UUID uuid = UUID.randomUUID();
+        Day day = new Day(uuid, dateString);
+        addDay(day);
+
+        // Create time slots
+        UUID dayId = day.getDayId();
+        for (int i = 7; i <= 23; i++) {
+            TimeSlot ts = new TimeSlot(dayId, i, "Sleep");
+            addTimeSlot(ts);
+        }
+        for (int i = 0; i < 7; i++) {
+            TimeSlot ts = new TimeSlot(dayId, i, "Sleep");
+            addTimeSlot(ts);
+        }
+    }
 }

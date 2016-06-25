@@ -30,12 +30,34 @@ public class MainActivity extends AppCompatActivity {
         // Find TabLayout
         mTabLayout = (TabLayout) findViewById(R.id.activity_tab_layout);
 
+        // Create new PagerAdapter
+        mPagerAdapter = new TabPagerAdapter(getSupportFragmentManager(),
+                mTabLayout, MainActivity.this);
+
         // Set up ViewPager
         mViewPager = (NoSwipeViewPager) findViewById(R.id.no_swipe_viewPager);
         mViewPager.setPageTransformer(false, mViewPager);
         mViewPager.setOffscreenPageLimit(4);
-        mPagerAdapter = new TabPagerAdapter(getSupportFragmentManager(), mTabLayout);
         mViewPager.setAdapter(mPagerAdapter);
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                // Do nothing
+            }
+
+            @Override
+            public void onPageSelected(final int position) {
+                // Update the UI of fragment
+                UpdateFragmentUI fragment =
+                        (UpdateFragmentUI) mPagerAdapter.instantiateItem(mViewPager, position);
+                fragment.updateUI();
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                // Do nothing
+            }
+        });
 
         // Finish setting up TabLayout
         mTabLayout.setupWithViewPager(mViewPager);
@@ -43,5 +65,13 @@ public class MainActivity extends AppCompatActivity {
 
         // Add tab icons
         mPagerAdapter.updateTabs();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        // Force reconstruction of TimeLab next time
+        TimeLab.nullifyInstance();
     }
 }

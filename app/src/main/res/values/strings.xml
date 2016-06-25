@@ -5,7 +5,11 @@
     <string name="energy_title">Energy Level</string>
     <string name="procrastination_title">Wasted Time</string>
     <string name="activity_hint">What are you doing right now?</string>
-    
+    <string name="menu_delete_day">Delete Day</string>
+    <string name="menu_reset_day">Reset Day</string>
+    <string name="empty_list_time_slots">No TimeSlots found.</string>
+    <string name="empty_list_days">No days recorded.</string>
+
     <string-array name="energy_level_array">
         <item>1</item>
         <item>2</item>

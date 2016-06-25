@@ -11,6 +11,8 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ImageSpan;
 
+import java.util.Date;
+
 /**
  * Created by Joseph on 6/21/16.
  */
@@ -22,17 +24,20 @@ public class TabPagerAdapter extends FragmentPagerAdapter {
     private static final int TAB_POSITION_HISTORY = 3;
 
     private TabLayout mTabLayout;
+    private Context mContext;
 
-    public TabPagerAdapter(FragmentManager manager, TabLayout tabLayout) {
+    public TabPagerAdapter(FragmentManager manager, TabLayout tabLayout, Context context) {
         super(manager);
         mTabLayout = tabLayout;
+        mContext = context;
     }
 
     @Override
     public Fragment getItem(int position) {
         switch (position) {
             case TAB_POSITION_TODAY:
-                return new TimeListFragment();
+                String dateString = SharedPreferences.formatDate(mContext, new Date());
+                return TimeListFragment.newInstance(dateString);
             case TAB_POSITION_GRAPHS:
                 return new SampleFragment();
             case TAB_POSITION_PIE_CHART:
