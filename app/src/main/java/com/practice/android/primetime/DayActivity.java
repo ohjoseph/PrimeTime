@@ -25,6 +25,7 @@ public class DayActivity extends AppCompatActivity {
         // Make fragment
         FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentById(R.id.fragment_container);
+
         if (fragment == null) {
             fragment = TimeListFragment.newInstance(mDateString);
             fm.beginTransaction()

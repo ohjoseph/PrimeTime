@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -15,7 +16,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 public class TimeListFragment extends Fragment implements UpdateFragmentUI {
     public static final int REQUEST_TIME_SLOT = 0;
@@ -34,6 +42,14 @@ public class TimeListFragment extends Fragment implements UpdateFragmentUI {
         TimeListFragment fragment = new TimeListFragment();
         Bundle args = new Bundle();
         args.putSerializable(ARG_DATE, dateString);
+
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public static TimeListFragment newInstance(String jsonString, boolean what) {
+        TimeListFragment fragment = new TimeListFragment();
+        Bundle args = new Bundle();
 
         fragment.setArguments(args);
         return fragment;
@@ -120,6 +136,40 @@ public class TimeListFragment extends Fragment implements UpdateFragmentUI {
     /*******
      * RecyclerView Classes
      ********/
+    private class TimeAdapter extends RecyclerView.Adapter<TimeHolder> {
+        private List<TimeSlot> mTimeSlots;
+        private int num;
+
+        public TimeAdapter(List<TimeSlot> timeSlots) {
+            mTimeSlots = timeSlots;
+        }
+
+        @Override
+        public TimeHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            LayoutInflater inflater = LayoutInflater.from(getActivity());
+            View v = inflater.inflate(R.layout.list_item_time_slot, parent, false);
+            Log.e("TLF", "made " + num);
+            num++;
+            return new TimeHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(TimeHolder holder, int position) {
+            TimeSlot ts = mTimeSlots.get(position);
+            holder.bindTimeHolder(ts);
+        }
+
+        @Override
+        public int getItemCount() {
+            return mTimeSlots.size();
+        }
+
+        public void setTimeSlots(List<TimeSlot> slots) {
+            mTimeSlots = slots;
+            notifyDataSetChanged();
+        }
+    }
+
     private class TimeHolder extends RecyclerView.ViewHolder
             implements View.OnClickListener {
 
@@ -160,37 +210,6 @@ public class TimeListFragment extends Fragment implements UpdateFragmentUI {
             TimeSlotDialog dialogFrag = TimeSlotDialog.newInstance(mTimeSlot);
             dialogFrag.setTargetFragment(TimeListFragment.this, REQUEST_TIME_SLOT);
             dialogFrag.show(fm, DIALOG_TIME_SLOT);
-        }
-    }
-
-    private class TimeAdapter extends RecyclerView.Adapter<TimeHolder> {
-        private List<TimeSlot> mTimeSlots;
-
-        public TimeAdapter(List<TimeSlot> timeSlots) {
-            mTimeSlots = timeSlots;
-        }
-
-        @Override
-        public TimeHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            LayoutInflater inflater = LayoutInflater.from(getActivity());
-            View v = inflater.inflate(R.layout.list_item_time_slot, parent, false);
-            return new TimeHolder(v);
-        }
-
-        @Override
-        public void onBindViewHolder(TimeHolder holder, int position) {
-            TimeSlot ts = mTimeSlots.get(position);
-            holder.bindTimeHolder(ts);
-        }
-
-        @Override
-        public int getItemCount() {
-            return mTimeSlots.size();
-        }
-
-        public void setTimeSlots(List<TimeSlot> slots) {
-            mTimeSlots = slots;
-            notifyDataSetChanged();
         }
     }
 

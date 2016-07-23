@@ -19,7 +19,7 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     private TabLayout mTabLayout;
-    private NoSwipeViewPager mViewPager;
+    private ViewPager mViewPager;
     private TabPagerAdapter mPagerAdapter;
 
     @Override
@@ -35,8 +35,7 @@ public class MainActivity extends AppCompatActivity {
                 mTabLayout, MainActivity.this);
 
         // Set up ViewPager
-        mViewPager = (NoSwipeViewPager) findViewById(R.id.no_swipe_viewPager);
-        mViewPager.setPageTransformer(false, mViewPager);
+        mViewPager = (ViewPager) findViewById(R.id.no_swipe_viewPager);
         mViewPager.setOffscreenPageLimit(4);
         mViewPager.setAdapter(mPagerAdapter);
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -61,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
 
         // Finish setting up TabLayout
         mTabLayout.setupWithViewPager(mViewPager);
-        mTabLayout.setTabsFromPagerAdapter(mPagerAdapter);
 
         // Add tab icons
         mPagerAdapter.updateTabs();

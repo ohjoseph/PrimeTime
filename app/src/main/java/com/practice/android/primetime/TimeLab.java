@@ -6,12 +6,17 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.google.gson.Gson;
 import com.practice.android.primetime.database.TimeBaseHelper;
 import com.practice.android.primetime.database.TimeCursorWrapper;
 import com.practice.android.primetime.database.TimeDbSchema.DayTable;
 import com.practice.android.primetime.database.TimeDbSchema.TimeTable;
 
+import org.json.JSONObject;
+
+import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -69,25 +74,6 @@ public class TimeLab {
                 values,
                 TimeTable.Cols.DAY_ID + " = ? AND " + TimeTable.Cols.TIME + " = ?",
                 new String[]{uuidString, timeString});
-    }
-
-    public TimeSlot getTimeSlot(UUID dayId, int time) {
-        // Get the timeslot for day and time
-        String whereClause = TimeTable.Cols.DAY_ID + " = ? AND " + TimeTable.Cols.TIME + " = ?";
-        String[] whereArgs = new String[]{dayId.toString(), Integer.toString(time)};
-        TimeCursorWrapper cursor = queryTimeSlots(whereClause, whereArgs);
-
-        // Get the timeSlot from the cursor
-        try {
-            if (cursor.getCount() == 0) {
-                return null;
-            }
-
-            cursor.moveToFirst();
-            return cursor.getTimeSlot();
-        } finally {
-            cursor.close();
-        }
     }
 
     public List<TimeSlot> getTimeSlots(String dateString) {
@@ -157,6 +143,7 @@ public class TimeLab {
         return null;
     }
 
+    // Get a list of all the days
     public List<Day> getDays() {
         // Get the list of all Days
         List<Day> dayList = new ArrayList<>();
@@ -175,6 +162,7 @@ public class TimeLab {
         return dayList;
     }
 
+    // Remove a day's timeslots from database
     public void deleteDay(String dateString) {
         // Delete the TimeSlots of that day
         String dayId = "";
@@ -200,6 +188,7 @@ public class TimeLab {
                 new String[]{dateString});
     }
 
+    // Gets the list of all days
     private TimeCursorWrapper queryDays() {
         Cursor cursor = mDatabase.query(
                 DayTable.NAME,
@@ -212,6 +201,7 @@ public class TimeLab {
         return new TimeCursorWrapper(cursor);
     }
 
+    // Return a cursor with single day's timeslots
     private TimeCursorWrapper queryDay(String dateString) {
         Cursor cursor = mDatabase.query(
                 DayTable.NAME,
@@ -266,5 +256,18 @@ public class TimeLab {
             TimeSlot ts = new TimeSlot(dayId, i, "Sleep");
             addTimeSlot(ts);
         }
+    }
+
+    public List<TimeSlot> getAllTimeSlots() {
+        List<Day> dayList = getDays();
+        List<TimeSlot> allSlots = new ArrayList<>();
+        for (Day d : dayList) {
+            List<TimeSlot> slots = getTimeSlots(d.getDateString());
+            for (TimeSlot slot : slots) {
+                allSlots.add(slot);
+            }
+        }
+
+        return allSlots;
     }
 }
